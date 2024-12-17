@@ -1,64 +1,85 @@
 var enterButton = document.getElementById("enter");
 var input = document.getElementById("userInput");
 var ul = document.querySelector("ul");
-var item = document.getElementsByTagName("li");
 
-function inputLength(){
-	return input.value.length;
-} 
-
-function listLength(){
-	return item.length;
+function inputLength() {
+    return input.value.length;
 }
 
-function createListElement() {
-	var li = document.createElement("li"); // creates an element "li"
-	li.appendChild(document.createTextNode(input.value)); //makes text from input field the li text
-	ul.appendChild(li); //adds li to ul
-	input.value = ""; //Reset text input field
+function createListElement(todo) {
+    var li = document.createElement("li");
+    li.appendChild(document.createTextNode(todo.text)); // Use todo.text for the text content
+    ul.appendChild(li);
+    if (todo.done) {
+        li.classList.add("done"); // Add 'done' class if the todo is marked as done
+    }
+    input.value = "";
 
+    // START STRIKETHROUGH
+    function crossOut() {
+        li.classList.toggle("done");
+        updateLocalStorage(); // Update local storage when crossing out
+    }
 
-	//START STRIKETHROUGH
-	// because it's in the function, it only adds it for new items
-	function crossOut() {
-		li.classList.toggle("done");
-	}
+    li.addEventListener("click", crossOut);
+    // END STRIKETHROUGH
 
-	li.addEventListener("click",crossOut);
-	//END STRIKETHROUGH
+    // START ADD DELETE BUTTON
+    var dBtn = document.createElement("button");
+    dBtn.appendChild(document.createTextNode("x"));
+    li.appendChild(dBtn);
+    dBtn.addEventListener("click", deleteListItem);
+    // END ADD DELETE BUTTON
 
-
-	// START ADD DELETE BUTTON
-	var dBtn = document.createElement("button");
-	dBtn.appendChild(document.createTextNode("X"));
-	li.appendChild(dBtn);
-	dBtn.addEventListener("click", deleteListItem);
-	// END ADD DELETE BUTTON
-
-
-	//ADD CLASS DELETE (DISPLAY: NONE)
-	function deleteListItem(){
-		li.classList.add("delete")
-	}
-	//END ADD CLASS DELETE
+    // ADD CLASS DELETE (DISPLAY: NONE)
+    function deleteListItem() {
+        li.classList.add("delete");
+        updateLocalStorage(); // Update local storage when deleting
+    }
 }
 
-
-function addListAfterClick(){
-	if (inputLength() > 0) { //makes sure that an empty input field doesn't create a li
-		createListElement();
-	}
+function addListAfterClick() {
+    if (inputLength() > 0) {
+        createListElement({ text: input.value, done: false }); // Pass an object
+        updateLocalStorage();
+    }
 }
 
 function addListAfterKeypress(event) {
-	if (inputLength() > 0 && event.which === 13) { //this now looks to see if you hit "enter"/"return"
-		//the 13 is the enter key's keycode, this could also be display by event.keyCode === 13
-		createListElement();
-	} 
+    if (inputLength() > 0 && event.which === 13) {
+        createListElement({ text: input.value, done: false }); // Pass an object
+        updateLocalStorage();
+    }
 }
 
+function saveToLocalStorage(todo) {
+    let todos = JSON.parse(localStorage.getItem('todos')) || [];
+    todos.push({ text: todo, done: false }); // Save as an object with text and done status
+    localStorage.setItem('todos', JSON.stringify(todos));
+}
 
-enterButton.addEventListener("click",addListAfterClick);
+function updateLocalStorage() {
+    let todos = [];
+    document.querySelectorAll("li").forEach(li => {
+        if (!li.classList.contains("delete")) {
+            todos.push({
+                text: li.firstChild.textContent,
+                done: li.classList.contains("done") // Save the done status
+            });
+        }
+    });
+    localStorage.setItem('todos', JSON.stringify(todos));
+}
 
+function loadTodos() {
+    let todos = JSON.parse(localStorage.getItem('todos')) || [];
+    todos.forEach(todo => {
+        createListElement(todo); // Pass the entire todo object
+    });
+}
+
+// Load todos from localStorage when the page loads
+window.onload = loadTodos;
+
+enterButton.addEventListener("click", addListAfterClick);
 input.addEventListener("keypress", addListAfterKeypress);
-
