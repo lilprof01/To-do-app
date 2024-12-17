@@ -7,6 +7,9 @@ body {
 	background: #001f3f;
 	text-align: center;
 	font-family: 'Open Sans', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .intro {
